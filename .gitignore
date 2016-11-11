@@ -1,0 +1,67 @@
+#include "ScriptMgr.h"
+#include "ObjectMgr.h"
+#include "MapManager.h"
+#include "Chat.h"
+#include "Group.h"
+
+class test_commandscript : public CommandScript
+{
+public:
+    test_commandscript() : CommandScript("test_commandscript") { }
+
+    ChatCommand* GetCommands() const
+    {
+        static ChatCommand testCommandTable[] =
+        {
+            { "command",            SEC_PLAYER,  false, &HandleTestCommand,             "", NULL },
+			{ "gurubashi",			SEC_PLAYER,  false, &HandleGurubashiCommand,		"", NULL },
+            { NULL,             0,                  false, NULL,                              "", NULL }
+        };
+        static ChatCommand commandTable[] =
+        {
+            { "test",           SEC_PLAYER,      true, NULL,                   "", testCommandTable },
+            { NULL,             0,                  false, NULL,                               "", NULL }
+        };
+        return commandTable;
+    }
+
+    static bool HandleTestCommand(ChatHandler* handler, const char* args)
+    {
+
+        Player* me = handler->GetSession()->GetPlayer();
+
+            me->Say("test command?", LANG_UNIVERSAL);
+            return true;
+    }
+
+    static bool HandleGurubashiCommand(ChatHandler* handler, const char* args)
+    {
+
+        Player* me = handler->GetSession()->GetPlayer();
+
+        if (me->isInCombat())
+        {
+            handler->SendSysMessage(LANG_YOU_IN_COMBAT);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        // stop flight if need
+        if (me->isInFlight())
+        {
+            me->GetMotionMaster()->MovementExpired();
+            me->CleanupAfterTaxiFlight();
+        }
+        // save only in non-flight case
+        else
+            me->SaveRecallPosition();
+
+		me->TeleportTo(0,	-13181.8f,	339.356f,	42.9805f,	1.18013f); // MapId, X, Y, Z, O
+        return true;
+    }
+};
+
+void AddSC_test_commandscript()
+{
+    new test_commandscript();
+}
